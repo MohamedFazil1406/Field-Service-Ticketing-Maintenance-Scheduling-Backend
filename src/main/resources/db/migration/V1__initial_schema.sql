@@ -26,7 +26,7 @@ CREATE TABLE devices (
                          device_code VARCHAR(100) NOT NULL UNIQUE,
                          name VARCHAR(150) NOT NULL,
                          site_id BIGINT NOT NULL,
-                         status VARCHAR(30) NOT NULL,
+                         status VARCHAR(20) NOT NULL,
                          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
                          CONSTRAINT fk_devices_site

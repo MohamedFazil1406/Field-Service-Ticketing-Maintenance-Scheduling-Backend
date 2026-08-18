@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Table(name = "devices")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Device {
 
@@ -19,7 +19,7 @@ public class Device {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "device_code", nullable = false, unique = true)
+    @Column(name = "device_code", nullable = false, unique = true, length = 100)
     private String deviceCode;
 
     @Column(nullable = false, length = 150)
@@ -30,10 +30,9 @@ public class Device {
     private Site site;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 20)
     private DeviceStatus status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-
 }
