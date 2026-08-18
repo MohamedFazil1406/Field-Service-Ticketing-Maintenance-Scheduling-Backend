@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sites")
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Site {
 
@@ -32,5 +32,4 @@ public class Site {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-
 }
