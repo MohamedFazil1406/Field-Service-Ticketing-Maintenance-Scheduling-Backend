@@ -3,17 +3,11 @@ package com.nova.fieldops.ticket;
 import com.nova.fieldops.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-    long countByAssignedTechnicianAndStatusIn(
-            User technician,
-            Iterable<TicketStatus> statuses
-    );
+    List<Ticket> findByAssignedTechnician(User technician);
 
-    long countByStatusAndSlaDeadlineBefore(
-            TicketStatus status,
-            LocalDateTime deadline
-    );
+    List<Ticket> findByStatus(TicketStatus status);
 }

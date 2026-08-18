@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tickets")
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Ticket {
 
@@ -39,15 +39,15 @@ public class Ticket {
     private TicketPriority priority;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 20)
     private TicketStatus status;
-
-    @Column(name = "sla_deadline", nullable = false)
-    private LocalDateTime slaDeadline;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "weather_risk", nullable = false, length = 20)
     private WeatherRisk weatherRisk;
+
+    @Column(name = "sla_deadline")
+    private LocalDateTime slaDeadline;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
