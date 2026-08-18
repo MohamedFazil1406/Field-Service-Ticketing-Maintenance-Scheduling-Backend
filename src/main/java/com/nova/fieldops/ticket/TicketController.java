@@ -3,6 +3,7 @@ package com.nova.fieldops.ticket;
 import com.nova.fieldops.ticket.dto.AssignTechnicianRequest;
 import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
+import com.nova.fieldops.ticket.dto.UpdateTicketStatusRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,17 @@ public class TicketController {
     ) {
         return ResponseEntity.ok(
                 ticketService.assignTechnician(ticketId, request)
+        );
+    }
+
+    @PatchMapping("/{ticketId}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DISPATCHER', 'TECHNICIAN')")
+    public ResponseEntity<TicketResponse> updateStatus(
+            @PathVariable Long ticketId,
+            @Valid @RequestBody UpdateTicketStatusRequest request
+    ) {
+        return ResponseEntity.ok(
+                ticketService.updateStatus(ticketId, request)
         );
     }
 }

@@ -7,6 +7,7 @@ import com.nova.fieldops.ticket.calculation.CalculationResult;
 import com.nova.fieldops.ticket.dto.AssignTechnicianRequest;
 import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
+import com.nova.fieldops.ticket.dto.UpdateTicketStatusRequest;
 import com.nova.fieldops.user.User;
 import com.nova.fieldops.user.UserRepository;
 import com.nova.fieldops.user.UserRole;
@@ -106,5 +107,61 @@ public class TicketService {
         Ticket savedTicket = ticketRepository.save(ticket);
 
         return toResponse(savedTicket);
+    }
+
+    public TicketResponse updateStatus(
+            Long ticketId,
+            UpdateTicketStatusRequest request
+    ) {
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Ticket not found")
+                );
+
+        TicketStatus currentStatus = ticket.getStatus();
+        TicketStatus newStatus = request.status();
+
+        validateTransition(currentStatus, newStatus);
+
+        ticket.setStatus(newStatus);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        return toResponse(savedTicket);
+    }
+
+    private void validateTransition(
+            TicketStatus currentStatus,
+            TicketStatus newStatus
+    ) {
+
+        boolean valid = switch (currentStatus) {
+
+            case OPEN ->
+                    newStatus == TicketStatus.ASSIGNED;
+
+            case ASSIGNED ->
+                    newStatus == TicketStatus.IN_PROGRESS;
+
+            case IN_PROGRESS ->
+                    newStatus == TicketStatus.RESOLVED;
+
+            case RESOLVED ->
+                    newStatus == TicketStatus.CLOSED;
+
+            case CLOSED ->
+                    false;
+        };
+
+        if (!valid) {
+            throw new IllegalArgumentException(
+                    "Invalid ticket status transition: "
+                            + currentStatus
+                            + " -> "
+                            + newStatus
+            );
+        }
     }
 }
