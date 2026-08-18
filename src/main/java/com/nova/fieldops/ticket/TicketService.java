@@ -1,5 +1,7 @@
 package com.nova.fieldops.ticket;
 
+import com.nova.fieldops.common.BadRequestException;
+import com.nova.fieldops.common.ResourceNotFoundException;
 import com.nova.fieldops.device.Device;
 import com.nova.fieldops.device.DeviceRepository;
 import com.nova.fieldops.ticket.calculation.CalculationEngine;
@@ -36,7 +38,7 @@ public class TicketService {
 
         Device device = deviceRepository.findById(request.deviceId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Device not found")
+                        new ResourceNotFoundException("Device not found")
                 );
 
         LocalDateTime now = LocalDateTime.now();
@@ -193,7 +195,7 @@ public class TicketService {
         };
 
         if (!valid) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "Invalid ticket status transition: "
                             + currentStatus
                             + " -> "

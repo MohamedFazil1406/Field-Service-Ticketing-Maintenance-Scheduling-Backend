@@ -1,5 +1,7 @@
 package com.nova.fieldops.user;
 
+import com.nova.fieldops.common.BadRequestException;
+import com.nova.fieldops.common.ResourceNotFoundException;
 import com.nova.fieldops.user.dto.CreateUserRequest;
 import com.nova.fieldops.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ public class UserService {
     public UserResponse createUser(CreateUserRequest request) {
 
         if (userRepository.findByEmail(request.email()).isPresent()) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "User with this email already exists"
             );
         }

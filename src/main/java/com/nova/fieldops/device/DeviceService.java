@@ -1,5 +1,7 @@
 package com.nova.fieldops.device;
 
+import com.nova.fieldops.common.BadRequestException;
+import com.nova.fieldops.common.ResourceNotFoundException;
 import com.nova.fieldops.device.dto.CreateDeviceRequest;
 import com.nova.fieldops.device.dto.DeviceResponse;
 import com.nova.fieldops.site.Site;
@@ -19,7 +21,7 @@ public class DeviceService {
     public DeviceResponse createDevice(CreateDeviceRequest request) {
 
         if (deviceRepository.findByDeviceCode(request.deviceCode()).isPresent()) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "Device with this code already exists"
             );
         }
