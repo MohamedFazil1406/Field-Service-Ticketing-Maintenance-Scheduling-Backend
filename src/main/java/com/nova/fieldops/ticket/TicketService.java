@@ -11,14 +11,14 @@ import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
 import com.nova.fieldops.ticket.dto.UpdateTicketStatusRequest;
 import com.nova.fieldops.user.User;
+import com.nova.fieldops.user.UserRepository;
+import com.nova.fieldops.user.UserRole;
 import com.nova.fieldops.weather.WeatherResponse;
 import com.nova.fieldops.weather.WeatherRiskCalculator;
 import com.nova.fieldops.weather.WeatherService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
-import com.nova.fieldops.user.UserRepository;
-import com.nova.fieldops.user.UserRole;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -36,18 +36,33 @@ public class TicketService {
 
     public TicketResponse createTicket(CreateTicketRequest request) {
 
-        Device device = deviceRepository.findById(request.deviceId())
+        Device device = deviceRepository.findByIdWithSite(request.deviceId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Device not found")
+                        new ResourceNotFoundException(
+                                "Device not found: " + request.deviceId()
+                        )
                 );
+
+        if (device.getSite() == null) {
+            throw new BadRequestException(
+                    "Device is not associated with a site"
+            );
+        }
+
+        if (device.getSite().getLatitude() == null ||
+                device.getSite().getLongitude() == null) {
+
+            throw new BadRequestException(
+                    "Site does not have valid coordinates"
+            );
+        }
 
         LocalDateTime now = LocalDateTime.now();
 
-        WeatherResponse weather =
-                weatherService.getWeather(
-                        device.getSite().getLatitude(),
-                        device.getSite().getLongitude()
-                );
+        WeatherResponse weather = weatherService.getWeather(
+                device.getSite().getLatitude(),
+                device.getSite().getLongitude()
+        );
 
         WeatherRisk weatherRisk =
                 weatherRiskCalculator.calculate(weather);
@@ -75,28 +90,6 @@ public class TicketService {
         return toResponse(savedTicket);
     }
 
-    private TicketResponse toResponse(Ticket ticket) {
-
-        Long technicianId =
-                ticket.getAssignedTechnician() == null
-                        ? null
-                        : ticket.getAssignedTechnician().getId();
-
-        return new TicketResponse(
-                ticket.getId(),
-                ticket.getTitle(),
-                ticket.getDescription(),
-                ticket.getDevice().getId(),
-                technicianId,
-                ticket.getPriority(),
-                ticket.getStatus(),
-                ticket.getSlaDeadline(),
-                ticket.getWeatherRisk(),
-                ticket.getCreatedAt(),
-                ticket.getUpdatedAt()
-        );
-    }
-
     public TicketResponse assignTechnician(
             Long ticketId,
             AssignTechnicianRequest request
@@ -104,16 +97,23 @@ public class TicketService {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Ticket not found")
+                        new ResourceNotFoundException(
+                                "Ticket not found: " + ticketId
+                        )
                 );
 
-        User technician = userRepository.findById(request.technicianId())
+        User technician = userRepository.findById(
+                        request.technicianId()
+                )
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Technician not found")
+                        new ResourceNotFoundException(
+                                "Technician not found: "
+                                        + request.technicianId()
+                        )
                 );
 
         if (technician.getRole() != UserRole.TECHNICIAN) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "Selected user is not a technician"
             );
         }
@@ -135,22 +135,33 @@ public class TicketService {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Ticket not found")
+                        new ResourceNotFoundException(
+                                "Ticket not found: " + ticketId
+                        )
                 );
 
         String currentUserEmail = authentication.getName();
 
-        User currentUser = userRepository.findByEmail(currentUserEmail)
+        User currentUser = userRepository.findByEmail(
+                        currentUserEmail
+                )
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found")
+                        new ResourceNotFoundException(
+                                "Authenticated user not found"
+                        )
                 );
 
         if (currentUser.getRole() == UserRole.TECHNICIAN) {
 
-            if (ticket.getAssignedTechnician() == null ||
-                    !ticket.getAssignedTechnician()
-                            .getId()
-                            .equals(currentUser.getId())) {
+            if (ticket.getAssignedTechnician() == null) {
+                throw new AccessDeniedException(
+                        "Ticket is not assigned to a technician"
+                );
+            }
+
+            if (!ticket.getAssignedTechnician()
+                    .getId()
+                    .equals(currentUser.getId())) {
 
                 throw new AccessDeniedException(
                         "You can only update tickets assigned to you"
@@ -202,5 +213,27 @@ public class TicketService {
                             + newStatus
             );
         }
+    }
+
+    private TicketResponse toResponse(Ticket ticket) {
+
+        Long technicianId =
+                ticket.getAssignedTechnician() == null
+                        ? null
+                        : ticket.getAssignedTechnician().getId();
+
+        return new TicketResponse(
+                ticket.getId(),
+                ticket.getTitle(),
+                ticket.getDescription(),
+                ticket.getDevice().getId(),
+                technicianId,
+                ticket.getPriority(),
+                ticket.getStatus(),
+                ticket.getSlaDeadline(),
+                ticket.getWeatherRisk(),
+                ticket.getCreatedAt(),
+                ticket.getUpdatedAt()
+        );
     }
 }
