@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,10 +44,15 @@ public class TicketController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DISPATCHER', 'TECHNICIAN')")
     public ResponseEntity<TicketResponse> updateStatus(
             @PathVariable Long ticketId,
-            @Valid @RequestBody UpdateTicketStatusRequest request
+            @Valid @RequestBody UpdateTicketStatusRequest request,
+            Authentication authentication
     ) {
         return ResponseEntity.ok(
-                ticketService.updateStatus(ticketId, request)
+                ticketService.updateStatus(
+                        ticketId,
+                        request,
+                        authentication
+                )
         );
     }
 }

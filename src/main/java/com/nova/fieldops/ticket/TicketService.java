@@ -9,6 +9,8 @@ import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
 import com.nova.fieldops.ticket.dto.UpdateTicketStatusRequest;
 import com.nova.fieldops.user.User;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import com.nova.fieldops.user.UserRepository;
 import com.nova.fieldops.user.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -111,13 +113,34 @@ public class TicketService {
 
     public TicketResponse updateStatus(
             Long ticketId,
-            UpdateTicketStatusRequest request
+            UpdateTicketStatusRequest request,
+            Authentication authentication
     ) {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Ticket not found")
                 );
+
+        String currentUserEmail = authentication.getName();
+
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found")
+                );
+
+        if (currentUser.getRole() == UserRole.TECHNICIAN) {
+
+            if (ticket.getAssignedTechnician() == null ||
+                    !ticket.getAssignedTechnician()
+                            .getId()
+                            .equals(currentUser.getId())) {
+
+                throw new AccessDeniedException(
+                        "You can only update tickets assigned to you"
+                );
+            }
+        }
 
         TicketStatus currentStatus = ticket.getStatus();
         TicketStatus newStatus = request.status();
