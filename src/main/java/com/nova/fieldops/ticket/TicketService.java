@@ -9,6 +9,9 @@ import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
 import com.nova.fieldops.ticket.dto.UpdateTicketStatusRequest;
 import com.nova.fieldops.user.User;
+import com.nova.fieldops.weather.WeatherResponse;
+import com.nova.fieldops.weather.WeatherRiskCalculator;
+import com.nova.fieldops.weather.WeatherService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import com.nova.fieldops.user.UserRepository;
@@ -26,6 +29,8 @@ public class TicketService {
     private final DeviceRepository deviceRepository;
     private final CalculationEngine calculationEngine;
     private final UserRepository userRepository;
+    private final WeatherService weatherService;
+    private final WeatherRiskCalculator weatherRiskCalculator;
 
     public TicketResponse createTicket(CreateTicketRequest request) {
 
@@ -36,9 +41,18 @@ public class TicketService {
 
         LocalDateTime now = LocalDateTime.now();
 
+        WeatherResponse weather =
+                weatherService.getWeather(
+                        device.getSite().getLatitude(),
+                        device.getSite().getLongitude()
+                );
+
+        WeatherRisk weatherRisk =
+                weatherRiskCalculator.calculate(weather);
+
         CalculationResult calculation =
                 calculationEngine.calculate(
-                        WeatherRisk.LOW,
+                        weatherRisk,
                         TicketPriority.MEDIUM
                 );
 
