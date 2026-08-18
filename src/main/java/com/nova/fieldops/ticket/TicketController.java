@@ -1,5 +1,6 @@
 package com.nova.fieldops.ticket;
 
+import com.nova.fieldops.ticket.dto.AssignTechnicianRequest;
 import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
 import jakarta.validation.Valid;
@@ -24,5 +25,16 @@ public class TicketController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ticketService.createTicket(request));
+    }
+
+    @PatchMapping("/{ticketId}/assign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DISPATCHER')")
+    public ResponseEntity<TicketResponse> assignTechnician(
+            @PathVariable Long ticketId,
+            @Valid @RequestBody AssignTechnicianRequest request
+    ) {
+        return ResponseEntity.ok(
+                ticketService.assignTechnician(ticketId, request)
+        );
     }
 }

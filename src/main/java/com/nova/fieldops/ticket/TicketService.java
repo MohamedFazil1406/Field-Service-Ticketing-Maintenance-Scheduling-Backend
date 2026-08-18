@@ -4,8 +4,12 @@ import com.nova.fieldops.device.Device;
 import com.nova.fieldops.device.DeviceRepository;
 import com.nova.fieldops.ticket.calculation.CalculationEngine;
 import com.nova.fieldops.ticket.calculation.CalculationResult;
+import com.nova.fieldops.ticket.dto.AssignTechnicianRequest;
 import com.nova.fieldops.ticket.dto.CreateTicketRequest;
 import com.nova.fieldops.ticket.dto.TicketResponse;
+import com.nova.fieldops.user.User;
+import com.nova.fieldops.user.UserRepository;
+import com.nova.fieldops.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +22,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final DeviceRepository deviceRepository;
     private final CalculationEngine calculationEngine;
+    private final UserRepository userRepository;
 
     public TicketResponse createTicket(CreateTicketRequest request) {
 
@@ -71,5 +76,35 @@ public class TicketService {
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt()
         );
+    }
+
+    public TicketResponse assignTechnician(
+            Long ticketId,
+            AssignTechnicianRequest request
+    ) {
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Ticket not found")
+                );
+
+        User technician = userRepository.findById(request.technicianId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Technician not found")
+                );
+
+        if (technician.getRole() != UserRole.TECHNICIAN) {
+            throw new IllegalArgumentException(
+                    "Selected user is not a technician"
+            );
+        }
+
+        ticket.setAssignedTechnician(technician);
+        ticket.setStatus(TicketStatus.ASSIGNED);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        return toResponse(savedTicket);
     }
 }
